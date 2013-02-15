@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">TryFragments</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="menu_settings">Settings</string>
+    <string name="searchString">Search Contact</string>
+    <string name="notes_hint">Write the notes for this contact here</string>
+    <string name="save_button">Save</string>
+
+</resources>
