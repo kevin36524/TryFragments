@@ -2,9 +2,11 @@ package com.example.tryfragments;
 
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
@@ -15,6 +17,8 @@ public class NotesFragment extends Fragment {
 	public static final String[] CONTACT_IFO = new String[] {"foo", "bar"};
 	public int mCurrentID = -1;
 	public String mCurrentName = "NoName";
+	private Boolean isContactFound;
+	private NotesDBHelper mDBHelper;
 	
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -40,16 +44,41 @@ public class NotesFragment extends Fragment {
 	
 	public void updateNotesView (int id, String name) {
 		EditText et = (EditText) getActivity().findViewById(R.id.notes_content);
+		mDBHelper = new NotesDBHelper(getActivity());
+		String dbNotes = mDBHelper.getNote(id);
 		
 		((TextView) getActivity().findViewById(R.id.notes_header)).setText(name);
 		
-		try {
-			et.setText(CONTACT_IFO[id]);
-		} catch (Exception e) {
-			et.setText("Default Text");
-		}
+		isContactFound = false;
+		if (dbNotes != null){
+			et.setText(dbNotes);
+			isContactFound = true;
+		} 
+		
 		mCurrentID = id;
 		mCurrentName = name;
+	}
+
+	@Override
+	public void onActivityCreated(Bundle savedInstanceState) {
+		// TODO Auto-generated method stub
+		super.onActivityCreated(savedInstanceState);
+		
+		Button save_btn = (Button)getActivity().findViewById(R.id.save_button);
+		save_btn.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View btnView) {
+				// TODO Auto-generated method stub
+				Log.i("KevinDebug", "will have to add or edit the notes here");
+				String updatedNote = ((EditText)getActivity().findViewById(R.id.notes_content)).getText().toString();
+				if (isContactFound) {
+					mDBHelper.updateNote(mCurrentID, updatedNote);
+				} else {
+					mDBHelper.addNote(mCurrentID, updatedNote);
+				}
+			}
+		});
 	}
 
 	@Override
