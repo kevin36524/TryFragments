@@ -1,11 +1,14 @@
 package com.example.tryfragments;
 
+import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
 
 public class MasterActivity extends FragmentActivity 
 	implements ContactsFragment.OnContactsSelectedListener{
+	
+	public Cursor mCursor;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -17,11 +20,11 @@ public class MasterActivity extends FragmentActivity
 	}
 
 	@Override
-	public void onContactSelected(int position) {
-		// TODO Auto-generated method stub
+	public void onContactSelected(int id, String name) {
 		NotesFragment mNotesFragment = new NotesFragment();
 		Bundle args = new Bundle();
-		args.putInt(NotesFragment.ARG_POSITION, position);
+		args.putInt(NotesFragment.ARG_ID, id);
+		args.putString("name", name);
 		mNotesFragment.setArguments(args);
 		
 		FragmentTransaction ftr = getSupportFragmentManager().beginTransaction();

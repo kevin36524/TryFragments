@@ -19,27 +19,28 @@ public class ContactsFragment extends ListFragment {
 
 	OnContactsSelectedListener mCallBack;
     public interface OnContactsSelectedListener {
-    	public void onContactSelected(int position);
+    	public void onContactSelected(int id, String name);
     }
 
 	private String[] projection = new String[] { Contacts.DISPLAY_NAME_PRIMARY, Contacts._ID};
 
 	private SimpleCursorAdapter mAdapter;
+	private Cursor mCursor;
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		
-     Cursor cs = getActivity().getContentResolver().query(Contacts.CONTENT_URI, projection , null, null, null);
+        mCursor = getActivity().getContentResolver().query(Contacts.CONTENT_URI, projection , null, null, null);
      
-/*     String[] contactsName = new String[cs.getCount()];
+/*     String[] contactsName = new String[mCursor.getCount()];
      Log.i("KevinDebug","Am I called twice");
-     if (cs.moveToFirst()) {
-    	 for (int i=0; i<cs.getCount(); i++) {
-    		 contactsName[i] = cs.getString(cs.getColumnIndex(RawContacts.DISPLAY_NAME_PRIMARY));
-    		 Log.i("KevinDebug",cs.getString(cs.getColumnIndex(RawContacts.CONTACT_ID)));
-    		 Log.i("KevinDebug",cs.getString(cs.getColumnIndex(RawContacts.DISPLAY_NAME_PRIMARY)));
-    		 cs.moveToNext();
+     if (mCursor.moveToFirst()) {
+    	 for (int i=0; i<mCursor.getCount(); i++) {
+    		 contactsName[i] = mCursor.getString(mCursor.getColumnIndex(RawContacts.DISPLAY_NAME_PRIMARY));
+    		 Log.i("KevinDebug",mCursor.getString(mCursor.getColumnIndex(RawContacts.CONTACT_ID)));
+    		 Log.i("KevinDebug",mCursor.getString(mCursor.getColumnIndex(RawContacts.DISPLAY_NAME_PRIMARY)));
+    		 mCursor.moveToNext();
     	 }
      }*/
      
@@ -50,7 +51,7 @@ public class ContactsFragment extends ListFragment {
      String[] mDataColumns = { Contacts.DISPLAY_NAME_PRIMARY };
      int[] mViewIDs = { android.R.id.text1 };
   
-     mAdapter = new SimpleCursorAdapter(getActivity(), android.R.layout.simple_list_item_1, cs, mDataColumns, mViewIDs, 0);
+     mAdapter = new SimpleCursorAdapter(getActivity(), android.R.layout.simple_list_item_1, mCursor, mDataColumns, mViewIDs, 0);
      setListAdapter(mAdapter);
 		
 	}
@@ -73,8 +74,8 @@ public class ContactsFragment extends ListFragment {
 				String selection = Contacts.DISPLAY_NAME + " LIKE ?";
 				String [] selectionArgs = {"%" + newText + "%"};
 				
-				Cursor cs = getActivity().getContentResolver().query(Contacts.CONTENT_URI, projection, selection, selectionArgs, null);
-				mAdapter.changeCursor(cs);
+				mCursor = getActivity().getContentResolver().query(Contacts.CONTENT_URI, projection, selection, selectionArgs, null);
+				mAdapter.changeCursor(mCursor);
 				
 				return false;
 			}
@@ -90,7 +91,12 @@ public class ContactsFragment extends ListFragment {
 
 	@Override
 	public void onListItemClick(ListView l, View v, int position, long id) {
-		mCallBack.onContactSelected((int)(id - 1));
+		
+		mCursor.moveToFirst();
+		mCursor.move(position);
+		
+		mCallBack.onContactSelected((int)(id-1),mCursor.getString(mCursor.getColumnIndex(Contacts.DISPLAY_NAME_PRIMARY)));
+		
 		l.setItemChecked(position, true);
 	}
 

@@ -6,18 +6,22 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.TextView;
 
 public class NotesFragment extends Fragment {
 
-	public static final String ARG_POSITION = "position";
+	public static final String ARG_ID = "id";
+	public static final String ARG_NAME = "name";
 	public static final String[] CONTACT_IFO = new String[] {"foo", "bar"};
-	public int mCurrentPosition = -1;
+	public int mCurrentID = -1;
+	public String mCurrentName = "NoName";
 	
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
 		if (savedInstanceState != null) {
-			mCurrentPosition = savedInstanceState.getInt(ARG_POSITION);
+			mCurrentID = savedInstanceState.getInt(ARG_ID);
+			mCurrentName = savedInstanceState.getString(ARG_NAME);
 		}
 		return inflater.inflate(R.layout.notes_view, container, false);
 	}
@@ -28,26 +32,31 @@ public class NotesFragment extends Fragment {
 		
 		Bundle args = getArguments();
 		if (args != null) {
-			updateNotesView (args.getInt(ARG_POSITION));
-		} else if (mCurrentPosition != -1) {
-			updateNotesView(mCurrentPosition);
+			updateNotesView (args.getInt(ARG_ID), args.getString(ARG_NAME));
+		} else if (mCurrentID != -1) {
+			updateNotesView(mCurrentID, mCurrentName);
 		}
 	}
 	
-	public void updateNotesView (int position) {
+	public void updateNotesView (int id, String name) {
 		EditText et = (EditText) getActivity().findViewById(R.id.notes_content);
+		
+		((TextView) getActivity().findViewById(R.id.notes_header)).setText(name);
+		
 		try {
-			et.setText(CONTACT_IFO[position]);
+			et.setText(CONTACT_IFO[id]);
 		} catch (Exception e) {
 			et.setText("Default Text");
 		}
-		mCurrentPosition = position;
+		mCurrentID = id;
+		mCurrentName = name;
 	}
 
 	@Override
 	public void onSaveInstanceState(Bundle outState) {
 		super.onSaveInstanceState(outState);
-		outState.putInt(ARG_POSITION, mCurrentPosition);
+		outState.putInt(ARG_ID, mCurrentID);
+		outState.putString(ARG_NAME, mCurrentName);
 	}
 
 }
