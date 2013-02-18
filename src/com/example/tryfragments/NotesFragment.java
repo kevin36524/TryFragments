@@ -17,7 +17,6 @@ public class NotesFragment extends Fragment {
 	public static final String[] CONTACT_IFO = new String[] {"foo", "bar"};
 	public int mCurrentID = -1;
 	public String mCurrentName = "NoName";
-	private Boolean isContactFound;
 	private NotesDBHelper mDBHelper;
 	
 	@Override
@@ -49,10 +48,8 @@ public class NotesFragment extends Fragment {
 		
 		((TextView) getActivity().findViewById(R.id.notes_header)).setText(name);
 		
-		isContactFound = false;
 		if (dbNotes != null){
 			et.setText(dbNotes);
-			isContactFound = true;
 		} 
 		
 		mCurrentID = id;
@@ -61,7 +58,6 @@ public class NotesFragment extends Fragment {
 
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
-		// TODO Auto-generated method stub
 		super.onActivityCreated(savedInstanceState);
 		
 		Button save_btn = (Button)getActivity().findViewById(R.id.save_button);
@@ -69,14 +65,9 @@ public class NotesFragment extends Fragment {
 			
 			@Override
 			public void onClick(View btnView) {
-				// TODO Auto-generated method stub
 				Log.i("KevinDebug", "will have to add or edit the notes here");
 				String updatedNote = ((EditText)getActivity().findViewById(R.id.notes_content)).getText().toString();
-				if (isContactFound) {
-					mDBHelper.updateNote(mCurrentID, updatedNote);
-				} else {
-					mDBHelper.addNote(mCurrentID, updatedNote);
-				}
+				mDBHelper.updateNote(mCurrentID, updatedNote);
 			}
 		});
 	}

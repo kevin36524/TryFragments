@@ -6,6 +6,7 @@ import org.json.JSONObject;
 
 import android.app.Activity;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.ContactsContract.CommonDataKinds.Email;
@@ -29,40 +30,35 @@ public class ContactsFragment extends ListFragment {
     	public void onContactSelected(int id, String name);
     }
 
-	private String[] projection = new String[] { Contacts.DISPLAY_NAME_PRIMARY, Contacts._ID};
+	private String[] projection = new String[] { NotesDBHelper.COLUMN_NAME, NotesDBHelper.COLUMN_ID};
 
 	private SimpleCursorAdapter mAdapter;
 	private Cursor mCursor;
+	private SQLiteDatabase notesDB;
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		notesDB = new NotesDBHelper(getActivity()).getReadableDatabase();
 		
-        mCursor = getActivity().getContentResolver().query(Contacts.CONTENT_URI, projection , null, null, null);
-     
-/*     String[] contactsName = new String[mCursor.getCount()];
-     Log.i("KevinDebug","Am I called twice");
-     if (mCursor.moveToFirst()) {
-    	 for (int i=0; i<mCursor.getCount(); i++) {
-    		 contactsName[i] = mCursor.getString(mCursor.getColumnIndex(RawContacts.DISPLAY_NAME_PRIMARY));
-    		 Log.i("KevinDebug",mCursor.getString(mCursor.getColumnIndex(RawContacts.CONTACT_ID)));
-    		 Log.i("KevinDebug",mCursor.getString(mCursor.getColumnIndex(RawContacts.DISPLAY_NAME_PRIMARY)));
-    		 mCursor.moveToNext();
-    	 }
-     }*/
-     
-     setHasOptionsMenu(true);
-     //setListAdapter(new ArrayAdapter<String>(getActivity(), android.R.layout.simple_list_item_1 , contactsName));
-     
-
-     String[] mDataColumns = { Contacts.DISPLAY_NAME_PRIMARY };
-     int[] mViewIDs = { android.R.id.text1 };
-  
-     mAdapter = new SimpleCursorAdapter(getActivity(), android.R.layout.simple_list_item_1, mCursor, mDataColumns, mViewIDs, 0);
-     setListAdapter(mAdapter);
-     
-     new generateDB().execute(new String[]{});
-		
+		if (NotesDBHelper.DATABASE_SET) {
+			mCursor = notesDB.query(NotesDBHelper.TABLE_NOTES, projection, null, null, null, null, null);
+			renderUI();
+		} else {
+			new generateDB().execute(new String[]{});	
+		}
+        //mCursor = getActivity().getContentResolver().query(Contacts.CONTENT_URI, projection , null, null, null);
+	
+	}
+	
+	public void renderUI () {
+		 setHasOptionsMenu(true);
+	     
+	     String[] mDataColumns = { NotesDBHelper.COLUMN_NAME};
+	     int[] mViewIDs = { android.R.id.text1 };
+	  
+	     mAdapter = new SimpleCursorAdapter(getActivity(), android.R.layout.simple_list_item_1, mCursor, mDataColumns, mViewIDs, 0);
+	     setListAdapter(mAdapter);
 	}
 
 	@Override
@@ -80,7 +76,7 @@ public class ContactsFragment extends ListFragment {
 			@Override
 			public boolean onQueryTextChange(String newText) {
 				Log.i("KevinDebug", "text is Changed and the newText is :- " + newText);
-				String selection = Contacts.DISPLAY_NAME + " LIKE ?";
+				String selection = NotesDBHelper.COLUMN_NAME + " LIKE ?";
 				String [] selectionArgs = {"%" + newText + "%"};
 				
 				mCursor = getActivity().getContentResolver().query(Contacts.CONTENT_URI, projection, selection, selectionArgs, null);
@@ -104,7 +100,7 @@ public class ContactsFragment extends ListFragment {
 		mCursor.moveToFirst();
 		mCursor.move(position);
 		
-		mCallBack.onContactSelected((int)(id-1),mCursor.getString(mCursor.getColumnIndex(Contacts.DISPLAY_NAME_PRIMARY)));
+		mCallBack.onContactSelected((int)(id),mCursor.getString(mCursor.getColumnIndex(NotesDBHelper.COLUMN_NAME)));
 		
 		l.setItemChecked(position, true);
 	}
@@ -142,8 +138,8 @@ public class ContactsFragment extends ListFragment {
 				tempObj = new JSONObject();
 				int index = retCursor.getInt(retCursor.getColumnIndex(Contacts._ID));
 				try {
-					tempObj.put("_id", retCursor.getString(retCursor.getColumnIndex(Contacts._ID)));
-					tempObj.put("name", retCursor.getString(retCursor.getColumnIndex(Contacts.DISPLAY_NAME)));
+					tempObj.put(NotesDBHelper.COLUMN_ID, retCursor.getString(retCursor.getColumnIndex(Contacts._ID)));
+					tempObj.put(NotesDBHelper.COLUMN_NAME, retCursor.getString(retCursor.getColumnIndex(Contacts.DISPLAY_NAME)));
 					postArr.put(index, tempObj);
 				} catch (JSONException e) {
 					e.printStackTrace();
@@ -162,8 +158,8 @@ public class ContactsFragment extends ListFragment {
 				try {
 					email_id = emailCursor.getString(emailCursor.getColumnIndex(Email.ADDRESS));
 					try {
-						tempObj = (JSONObject) postArr.get(index);
-						tempObj.put("email",email_id);
+						tempObj = postArr.getJSONObject(index);
+						tempObj.put(NotesDBHelper.COLUMN_EMAIL,email_id);
 						postArr.put(index, tempObj);
 					} catch (JSONException e) {
 						e.printStackTrace();
@@ -172,7 +168,6 @@ public class ContactsFragment extends ListFragment {
 					e.printStackTrace();
 				}
 
-				Log.i("KevinDebug","index :- " + index + "Email ID :-" + email_id);
 				emailCursor.moveToNext();
 			}
 			
@@ -184,8 +179,8 @@ public class ContactsFragment extends ListFragment {
 				try {
 					phNumber = phCursor.getString(phCursor.getColumnIndex(Phone.NUMBER));
 					try {
-						tempObj = (JSONObject) postArr.get(index);
-						tempObj.put("ph",phNumber);
+						tempObj = postArr.getJSONObject(index);
+						tempObj.put(NotesDBHelper.COLUMN_PH_NUMBER,phNumber);
 						postArr.put(index, tempObj);
 					} catch (JSONException e) {
 						e.printStackTrace();
@@ -194,13 +189,21 @@ public class ContactsFragment extends ListFragment {
 					e.printStackTrace();
 				}	
 				
-				Log.i("KevinDebug","index :- " + index + "phone Number :-" + phNumber);
 				phCursor.moveToNext();
 			}
+			
+			new NotesDBHelper(getActivity()).initialAdd(postArr);
 			
 			Log.i("KevinDebug","postArr is :- " + postArr.toString());
 			
 			return null;
+		}
+
+		@Override
+		protected void onPostExecute(String result) {
+			super.onPostExecute(result);
+			mCursor = notesDB.query(NotesDBHelper.TABLE_NOTES, projection, null, null, null, null, null);
+			renderUI();
 		}
 		
 	}

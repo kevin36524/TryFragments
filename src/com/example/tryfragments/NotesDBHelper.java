@@ -1,5 +1,9 @@
 package com.example.tryfragments;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
@@ -12,12 +16,16 @@ public class NotesDBHelper extends SQLiteOpenHelper {
 	public static final String TABLE_NOTES = "notesTable";
 	public static final String COLUMN_ID = "_id";
 	public static final String COLUMN_NOTES = "notes";
+	public static final String COLUMN_PH_NUMBER = "phNum";
+	public static final String COLUMN_EMAIL = "email";
+	public static final String COLUMN_NAME = "name";
+	public static Boolean DATABASE_SET = true;
 	
 	private static final String DATABASE_NAME = "notes.db";
 	private static final int DATABASE_VERSION = 1;
 	
 	private static final String DATABASE_CREATE = "create TABLE " + TABLE_NOTES + "(" 
-			+ COLUMN_ID + " integer primary key, " + COLUMN_NOTES + " text not null);"; 
+			+ COLUMN_ID + " long primary key, " + COLUMN_NAME + " text, " +  COLUMN_EMAIL + " text, " + COLUMN_PH_NUMBER + " text, "  + COLUMN_NOTES + " text);"; 
 
 	
 	public NotesDBHelper(Context context) {
@@ -28,7 +36,7 @@ public class NotesDBHelper extends SQLiteOpenHelper {
 	public void onCreate(SQLiteDatabase database) {
 		database.execSQL(DATABASE_CREATE);
 		Log.i("KevinDebug", "Creating the DataBase");
-
+		DATABASE_SET = false;
 	}
 
 	@Override
@@ -53,6 +61,41 @@ public class NotesDBHelper extends SQLiteOpenHelper {
 		db.close();
 	}
 	
+	public void initialAdd (JSONArray dbArray) {
+		SQLiteDatabase db = this.getWritableDatabase();
+		ContentValues values;
+		JSONObject tempObj;
+		
+		for (int i = 0; i < dbArray.length(); i++) {
+			values = new ContentValues();
+		   try {
+			   tempObj = dbArray.getJSONObject(i);
+			   JSONArray tempNameArr = tempObj.names();
+			   String key;
+			   
+			   for (int j=0; j < tempNameArr.length(); j++) {
+				   key = tempNameArr.getString(j);
+				   
+				   if (key.equals(COLUMN_ID)){
+					   values.put(key, tempObj.getLong(key));
+				   } else {
+					   values.put(key, tempObj.getString(key));
+				   }
+			   }
+		   } catch (JSONException e) {
+			   e.printStackTrace();
+		   }	
+		   
+		   if (values.size() > 1) {
+			   db.insert(TABLE_NOTES, null, values);
+		   }
+		   
+		}
+		
+		db.close();
+		DATABASE_SET = true;
+	}
+	
 	public String getNote (int id) {
 		SQLiteDatabase db = this.getReadableDatabase();
 		String retNotes = null;
@@ -75,7 +118,7 @@ public class NotesDBHelper extends SQLiteOpenHelper {
 		return retNotes;
 	}
 	
-	public void updateNote(int id, String note) {
+	public void updateNote(long id, String note) {
 		SQLiteDatabase db = this.getWritableDatabase();
 		ContentValues values = new ContentValues();
 		
