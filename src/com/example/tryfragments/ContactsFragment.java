@@ -1,8 +1,15 @@
 package com.example.tryfragments;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import android.app.Activity;
 import android.database.Cursor;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.provider.ContactsContract.CommonDataKinds.Email;
+import android.provider.ContactsContract.CommonDataKinds.Phone;
 import android.provider.ContactsContract.Contacts;
 import android.support.v4.app.ListFragment;
 import android.support.v4.widget.SimpleCursorAdapter;
@@ -53,6 +60,8 @@ public class ContactsFragment extends ListFragment {
   
      mAdapter = new SimpleCursorAdapter(getActivity(), android.R.layout.simple_list_item_1, mCursor, mDataColumns, mViewIDs, 0);
      setListAdapter(mAdapter);
+     
+     new generateDB().execute(new String[]{});
 		
 	}
 
@@ -110,6 +119,90 @@ public class ContactsFragment extends ListFragment {
 		} catch (Exception e) {
 			Log.e("ContactsFragment"," Must implement the OnContactsSelectedListener");
 		}
+	}
+	
+	private class generateDB extends AsyncTask<String, Integer, String> {
+
+		@Override
+		protected String doInBackground(String... params) {
+			
+			Log.i("KevinDebug","I am called from generateDB/doInBackground");
+			
+			String [] fetchFields = new String [] {Contacts._ID,Contacts.DISPLAY_NAME};
+			Cursor retCursor = getActivity().getContentResolver().query(Contacts.CONTENT_URI, fetchFields, null, null, null);
+			Cursor emailCursor = getActivity().getContentResolver().query(Email.CONTENT_URI, new String[] {Email.CONTACT_ID,Email.ADDRESS}, null, null, null);
+			Cursor phCursor = getActivity().getContentResolver().query(Phone.CONTENT_URI, new String[] {Phone.CONTACT_ID,Phone.NUMBER},null,null,null);
+			
+			JSONArray postArr  = new JSONArray();
+			JSONObject tempObj;
+			
+
+			retCursor.moveToFirst();
+			for(int i=0; i < retCursor.getCount(); i++) {
+				tempObj = new JSONObject();
+				int index = retCursor.getInt(retCursor.getColumnIndex(Contacts._ID));
+				try {
+					tempObj.put("_id", retCursor.getString(retCursor.getColumnIndex(Contacts._ID)));
+					tempObj.put("name", retCursor.getString(retCursor.getColumnIndex(Contacts.DISPLAY_NAME)));
+					postArr.put(index, tempObj);
+				} catch (JSONException e) {
+					e.printStackTrace();
+				}
+				
+				retCursor.moveToNext();
+			}
+			
+
+			emailCursor.moveToFirst();
+			for (int i = 0 ; i < emailCursor.getCount(); i++) {
+				
+				int index = emailCursor.getInt(emailCursor.getColumnIndex(Email.CONTACT_ID));
+				
+				String email_id = "";
+				try {
+					email_id = emailCursor.getString(emailCursor.getColumnIndex(Email.ADDRESS));
+					try {
+						tempObj = (JSONObject) postArr.get(index);
+						tempObj.put("email",email_id);
+						postArr.put(index, tempObj);
+					} catch (JSONException e) {
+						e.printStackTrace();
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+
+				Log.i("KevinDebug","index :- " + index + "Email ID :-" + email_id);
+				emailCursor.moveToNext();
+			}
+			
+			phCursor.moveToFirst();
+			for (int i = 0 ; i < phCursor.getCount(); i++) {
+				int index = phCursor.getInt(phCursor.getColumnIndex(Phone.CONTACT_ID));
+				
+				String phNumber = "";
+				try {
+					phNumber = phCursor.getString(phCursor.getColumnIndex(Phone.NUMBER));
+					try {
+						tempObj = (JSONObject) postArr.get(index);
+						tempObj.put("ph",phNumber);
+						postArr.put(index, tempObj);
+					} catch (JSONException e) {
+						e.printStackTrace();
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
+				}	
+				
+				Log.i("KevinDebug","index :- " + index + "phone Number :-" + phNumber);
+				phCursor.moveToNext();
+			}
+			
+			Log.i("KevinDebug","postArr is :- " + postArr.toString());
+			
+			return null;
+		}
+		
 	}
 
 }
