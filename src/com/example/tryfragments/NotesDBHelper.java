@@ -103,8 +103,6 @@ public class NotesDBHelper extends SQLiteOpenHelper {
 		Cursor retCursor = db.query(TABLE_NOTES, new String [] {COLUMN_NOTES}, COLUMN_ID + "=?", new String [] {""+id}, null, null, null);
 		
 		retCursor.moveToFirst();
-
-		Log.i("KevinDebug", "get the Note for id " + id);
 		
 		if (retCursor != null) { 
 			try {
@@ -115,6 +113,25 @@ public class NotesDBHelper extends SQLiteOpenHelper {
 		}
 		db.close();
 		
+		return retNotes;
+	}
+	
+	public String getNotesFromPhoneNumber (String phNum) {
+		SQLiteDatabase db = this.getReadableDatabase();
+		String retNotes = null;
+				
+		Cursor tempCursor = db.query(TABLE_NOTES, new String [] {COLUMN_NOTES}, COLUMN_PH_NUMBER + " LIKE ? ", new String [] {"%" + phNum.substring(phNum.length() - 8)}, null, null, null);
+		
+		tempCursor.moveToFirst();
+		try {
+			retNotes = tempCursor.getString(tempCursor.getColumnIndex(COLUMN_NOTES));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		db.close();
+		
+		Log.i("KevinDebug", " Notes from getNotesFromPhoneNumber are :- " + retNotes);
 		return retNotes;
 	}
 	

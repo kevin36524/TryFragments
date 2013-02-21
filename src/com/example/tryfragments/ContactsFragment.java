@@ -79,7 +79,8 @@ public class ContactsFragment extends ListFragment {
 				String selection = NotesDBHelper.COLUMN_NAME + " LIKE ?";
 				String [] selectionArgs = {"%" + newText + "%"};
 				
-				mCursor = getActivity().getContentResolver().query(Contacts.CONTENT_URI, projection, selection, selectionArgs, null);
+				//mCursor = getActivity().getContentResolver().query(Contacts.CONTENT_URI, projection, selection, selectionArgs, null);
+				mCursor = notesDB.query(NotesDBHelper.TABLE_NOTES, projection, selection, selectionArgs, null, null, null);
 				mAdapter.changeCursor(mCursor);
 				
 				return false;
@@ -130,6 +131,7 @@ public class ContactsFragment extends ListFragment {
 			Cursor phCursor = getActivity().getContentResolver().query(Phone.CONTENT_URI, new String[] {Phone.CONTACT_ID,Phone.NUMBER},null,null,null);
 			
 			JSONArray postArr  = new JSONArray();
+			JSONArray tempArr  = new JSONArray();
 			JSONObject tempObj;
 			
 
@@ -140,7 +142,7 @@ public class ContactsFragment extends ListFragment {
 				try {
 					tempObj.put(NotesDBHelper.COLUMN_ID, retCursor.getString(retCursor.getColumnIndex(Contacts._ID)));
 					tempObj.put(NotesDBHelper.COLUMN_NAME, retCursor.getString(retCursor.getColumnIndex(Contacts.DISPLAY_NAME)));
-					postArr.put(index, tempObj);
+					tempArr.put(index, tempObj);
 				} catch (JSONException e) {
 					e.printStackTrace();
 				}
@@ -158,9 +160,9 @@ public class ContactsFragment extends ListFragment {
 				try {
 					email_id = emailCursor.getString(emailCursor.getColumnIndex(Email.ADDRESS));
 					try {
-						tempObj = postArr.getJSONObject(index);
+						tempObj = tempArr.getJSONObject(index);
 						tempObj.put(NotesDBHelper.COLUMN_EMAIL,email_id);
-						postArr.put(index, tempObj);
+						tempArr.put(index, tempObj);
 					} catch (JSONException e) {
 						e.printStackTrace();
 					}
@@ -178,10 +180,11 @@ public class ContactsFragment extends ListFragment {
 				String phNumber = "";
 				try {
 					phNumber = phCursor.getString(phCursor.getColumnIndex(Phone.NUMBER));
+					phNumber = phNumber.replace(" ", "");
 					try {
-						tempObj = postArr.getJSONObject(index);
+						tempObj = tempArr.getJSONObject(index);
 						tempObj.put(NotesDBHelper.COLUMN_PH_NUMBER,phNumber);
-						postArr.put(index, tempObj);
+						tempArr.put(index, tempObj);
 					} catch (JSONException e) {
 						e.printStackTrace();
 					}
@@ -190,6 +193,16 @@ public class ContactsFragment extends ListFragment {
 				}	
 				
 				phCursor.moveToNext();
+			}
+			
+			for(int i=0; i<tempArr.length(); i++) {
+				try {
+					if(tempArr.getJSONObject(i) != null) {
+					    postArr.put(i,tempArr.getJSONObject(i));	
+					}
+				} catch (JSONException e) {
+					e.printStackTrace();
+				}
 			}
 			
 			new NotesDBHelper(getActivity()).initialAdd(postArr);

@@ -14,7 +14,6 @@ public class NotesFragment extends Fragment {
 
 	public static final String ARG_ID = "id";
 	public static final String ARG_NAME = "name";
-	public static final String[] CONTACT_IFO = new String[] {"foo", "bar"};
 	public int mCurrentID = -1;
 	public String mCurrentName = "NoName";
 	private NotesDBHelper mDBHelper;

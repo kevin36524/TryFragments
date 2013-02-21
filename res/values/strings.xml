@@ -8,5 +8,6 @@
     <string name="notes_hint">Write the notes for this contact here</string>
     <string name="save_button">Save</string>
     <string name="title_activity_call_screen">CallScreenActivity</string>
+    <string name="title_activity_front_screen">FrontScreenActivity</string>
 
 </resources>

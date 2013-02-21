@@ -35,8 +35,11 @@
 
         <activity
             android:name="com.example.tryfragments.CallScreenActivity"
-            android:label="@string/title_activity_call_screen" >
+            android:label="@string/title_activity_call_screen"
+            android:theme="@android:style/Theme.Dialog">
         </activity>
+        
+        
     </application>
 
 </manifest>
