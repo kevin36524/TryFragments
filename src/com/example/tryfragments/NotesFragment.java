@@ -1,5 +1,24 @@
 package com.example.tryfragments;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.util.EntityUtils;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -35,6 +54,7 @@ public class NotesFragment extends Fragment {
 		Bundle args = getArguments();
 		if (args != null) {
 			updateNotesView (args.getInt(ARG_ID), args.getString(ARG_NAME));
+			new getNotesFromRemoteDB().execute(Integer.toString(args.getInt(ARG_ID)));
 		} else if (mCurrentID != -1) {
 			updateNotesView(mCurrentID, mCurrentName);
 		}
@@ -67,6 +87,8 @@ public class NotesFragment extends Fragment {
 				Log.i("KevinDebug", "will have to add or edit the notes here");
 				String updatedNote = ((EditText)getActivity().findViewById(R.id.notes_content)).getText().toString();
 				mDBHelper.updateNote(mCurrentID, updatedNote);
+				
+				new updateRemoteDB().execute(Integer.toString(mCurrentID), updatedNote);
 			}
 		});
 	}
@@ -78,4 +100,84 @@ public class NotesFragment extends Fragment {
 		outState.putString(ARG_NAME, mCurrentName);
 	}
 
+	private class updateRemoteDB extends AsyncTask<String, Integer, String> {
+
+		@Override
+		protected String doInBackground(String... params) {
+			Log.i("KevinDebug", params[0] + params[1]);
+			JSONObject tempObj = new JSONObject();
+			try {
+				tempObj.put(NotesDBHelper.COLUMN_ID, params[0]);
+				tempObj.put(NotesDBHelper.COLUMN_NOTES, params[1]);
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+			
+
+			Log.i("KevinDebug", "tempObj string is :- " + tempObj.toString());
+			
+			HttpClient httpclient = new DefaultHttpClient();
+		    HttpPost httppost = new HttpPost("http://kevinpatel.000space.com/try.php?updateEntry=1");
+		    
+		    try {
+		        // Add your data
+		        List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(2);
+		        nameValuePairs.add(new BasicNameValuePair("data", tempObj.toString()));
+		        httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
+		        
+		        // Execute HTTP Post Request
+		        httpclient.execute(httppost);
+		        
+		    } catch (ClientProtocolException e) {
+		    } catch (IOException e) {
+		    }
+			
+		   
+			return null;
+		}
+		
+	}
+
+	private class getNotesFromRemoteDB extends AsyncTask<String, Integer, String> {
+
+		@Override
+		protected String doInBackground(String... params) {
+			Log.i("KevinDebug","from do in background :- ");
+			
+			HttpClient httpclient = new DefaultHttpClient(); // Create HTTP Client
+			HttpGet httpget = new HttpGet("http://kevinpatel.000space.com/try.php?fetchItem=1&id=" + params[0]); // Set the action you want to do
+			HttpResponse response = null;
+			String resString = "";
+			
+			try {
+				response = httpclient.execute(httpget);
+				int responseCode = response.getStatusLine().getStatusCode();
+				Log.i("KevinDebug", "Response Code is :- " + responseCode);
+				if (responseCode == 200) {
+					HttpEntity entity = response.getEntity();
+					if(entity != null) {
+						resString = EntityUtils.toString(entity);
+					}
+				}
+			} catch (ClientProtocolException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			
+			Log.i("KevinDebug", "Res String is :- " + resString);
+			return resString;
+		}
+
+		@Override
+		protected void onPostExecute(String result) {
+			super.onPostExecute(result);
+			
+			if (result.length() > 0) {
+			    ((EditText) getActivity().findViewById(R.id.notes_content)).setText(result);
+			}
+		}
+		
+		
+	}
 }

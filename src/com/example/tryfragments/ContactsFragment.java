@@ -1,5 +1,17 @@
 package com.example.tryfragments;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.message.BasicNameValuePair;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -195,10 +207,13 @@ public class ContactsFragment extends ListFragment {
 				phCursor.moveToNext();
 			}
 			
+			int j=0;
 			for(int i=0; i<tempArr.length(); i++) {
 				try {
-					if(tempArr.getJSONObject(i) != null) {
-					    postArr.put(i,tempArr.getJSONObject(i));	
+					Log.i("KevinDebug","index is :- " + i + "length is " + tempArr.getJSONObject(i).length());
+					if(tempArr.getJSONObject(i).length() != 0) {
+					    postArr.put(j,tempArr.getJSONObject(i));
+					    j++;
 					}
 				} catch (JSONException e) {
 					e.printStackTrace();
@@ -208,6 +223,23 @@ public class ContactsFragment extends ListFragment {
 			new NotesDBHelper(getActivity()).initialAdd(postArr);
 			
 			Log.i("KevinDebug","postArr is :- " + postArr.toString());
+			
+			HttpClient httpclient = new DefaultHttpClient();
+		    HttpPost httppost = new HttpPost("http://kevinpatel.000space.com/try.php?freshStart=1");
+
+		    try {
+		        // Add your data
+		        List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(2);
+		        nameValuePairs.add(new BasicNameValuePair("data", postArr.toString()));
+		        httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
+		        
+		        // Execute HTTP Post Request
+		        HttpResponse response = httpclient.execute(httppost);
+		        Log.i("KevinDebug", response.getEntity().toString());
+		        
+		    } catch (ClientProtocolException e) {
+		    } catch (IOException e) {
+		    }
 			
 			return null;
 		}
